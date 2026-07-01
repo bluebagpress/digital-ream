@@ -1,6 +1,6 @@
 # Digital Ream
 
-A single self-contained web viewer for *Digital Ream* by Lizabetta Frankline (501 pages).
+Blue Bag Press is pleased to present Lizabetta Frankline's _DIGITAL REAM.__
 
 ## What's here
 - `index.html` — the entire viewer (HTML/CSS/JS + all page data embedded). No build step, no dependencies.

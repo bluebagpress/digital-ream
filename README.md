@@ -1,6 +1,6 @@
 # Digital Ream
 
-Blue Bag Press is pleased to present Lizabetta Frankline's _DIGITAL REAM.
+Blue Bag Press is pleased to present Lizabetta Frankline's _DIGITAL REAM._
 
 ## What's here
 - `index.html` — the entire viewer (HTML/CSS/JS + all page data embedded). No build step, no dependencies.

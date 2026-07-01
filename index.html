@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Digital Ream</title>
+<style>
+  :root{
+    --paper:#fdfdfb;
+    --ink:#111;
+    --muted:#8a8a86;
+    --accent:#111;
+    --shadow: 0 1px 2px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.14);
+    --aspect-w: 612;
+    --aspect-h: 792;
+  }
+  *{ box-sizing:border-box; }
+  html,body{
+    height:100%; margin:0;
+    background:#e9e8e4;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color:var(--ink);
+    overscroll-behavior:none;
+  }
+  body{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100vh; padding: 18px 16px 22px;
+  }
+  .stage{
+    position:relative;
+    width: min(92vw, calc((100vh - 150px) * (var(--aspect-w) / var(--aspect-h))));
+    max-width: 900px;
+    aspect-ratio: var(--aspect-w) / var(--aspect-h);
+    perspective: 1800px;
+  }
+  .page{
+    position:absolute; inset:0;
+    background:var(--paper);
+    border-radius:3px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(0,0,0,0.06);
+    display:flex;
+    overflow:hidden;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+  .page.leaving{ opacity:0; transform: scale(0.985); }
+  .page.entering{ opacity:0; transform: scale(1.01); }
+
+  .cover{
+    flex-direction:column;
+    justify-content:space-between;
+    padding: 7% 8%;
+  }
+  .cover .cover-top{
+    font-family:"Courier New", Courier, monospace;
+    font-weight:700;
+    font-size: clamp(11px, 1.8vw, 17px);
+    line-height:1.55;
+  }
+  .cover .cover-top .book{ font-style:italic; }
+  .cover .cover-bottom{
+    font-family:"Courier New", Courier, monospace;
+    font-weight:700;
+    font-size: clamp(10px, 1.5vw, 14px);
+    padding-left: 2%;
+    color:#222;
+  }
+
+  .content{
+    align-items:center; justify-content:center;
+    text-align:center; padding: 6% 9%;
+  }
+  .content .text{
+    font-family:"Courier New", Courier, monospace;
+    font-weight:700;
+    line-height:1.4;
+    word-break:break-word;
+  }
+
+  .blank{ align-items:center; justify-content:center; }
+  .blank .ghost-num{
+    font-family:"Courier New", Courier, monospace;
+    font-size: 11px;
+    color: rgba(0,0,0,0.05);
+    user-select:none;
+  }
+
+  .zone{ position:absolute; top:0; bottom:0; width:50%; cursor: pointer; z-index:2; }
+  .zone.left{ left:0; }
+  .zone.right{ right:0; }
+
+  .controls{
+    width:100%; max-width:900px;
+    display:flex; align-items:center; justify-content:center;
+    gap: 14px; margin-top:16px; padding: 0 4px;
+    font-size: 13px; color:#333;
+  }
+  button{
+    font: inherit; cursor:pointer; border:none; background:#fff;
+    color:#111; width:34px; height:34px; border-radius:50%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.08);
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+    transition: transform 0.1s ease;
+  }
+  button:active{ transform: scale(0.92); }
+  button:disabled{ opacity:0.35; cursor:default; }
+  button:disabled:active{ transform:none; }
+
+  .pageinfo{
+    display:flex; align-items:center; gap:6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .pageinfo input{
+    width:46px; text-align:center; font: inherit;
+    border:1px solid #ccc; border-radius:5px; padding:3px 2px;
+    background:#fff;
+  }
+  .pageinfo span{ color:var(--muted); }
+
+  .hint{
+    margin-top:8px; font-size:11px; color:#a3a29e; text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <div class="zone left" id="zoneLeft" aria-label="Previous page"></div>
+  <div class="zone right" id="zoneRight" aria-label="Next page"></div>
+</div>
+
+<div class="controls">
+  <button id="prevBtn" aria-label="Previous page">&#8249;</button>
+  <div class="pageinfo">
+    <input id="pageInput" type="number" min="1" max="501" value="1">
+    <span>/ 501</span>
+  </div>
+  <button id="nextBtn" aria-label="Next page">&#8250;</button>
+</div>
+
+<script>
+const PAGES = [{"type": "cover", "lines": ["Lizabetta Frankline // Digital Ream"]}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}, {"type": "blank"}];
+const TOTAL = PAGES.length;
+let current = 0; // zero-indexed
+const stage = document.getElementById('stage');
+const pageInput = document.getElementById('pageInput');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+function renderPageEl(idx){
+  const p = PAGES[idx];
+  const el = document.createElement('div');
+  el.className = 'page ' + p.type;
+  if(p.type === 'cover'){
+    const top = document.createElement('div');
+    top.className = 'cover-top';
+    (p.lines.slice(0, p.lines.length > 1 ? 2 : 1)).forEach(line => {
+      const d = document.createElement('div');
+      d.textContent = line;
+      top.appendChild(d);
+    });
+    el.appendChild(top);
+    if(p.lines.length > 2){
+      const bottom = document.createElement('div');
+      bottom.className = 'cover-bottom';
+      bottom.textContent = p.lines[p.lines.length - 1];
+      el.appendChild(bottom);
+    } else {
+      const spacer = document.createElement('div');
+      el.appendChild(spacer);
+    }
+  } else if(p.type === 'content'){
+    const t = document.createElement('div');
+    t.className = 'text';
+    t.textContent = p.text;
+    const len = p.text.length;
+    let size = 30;
+    if(len > 60) size = 15;
+    else if(len > 40) size = 19;
+    else if(len > 25) size = 23;
+    t.style.fontSize = 'clamp(12px, ' + size + 'px, ' + size + 'px)';
+    el.appendChild(t);
+  } else {
+    const g = document.createElement('div');
+    g.className = 'ghost-num';
+    g.textContent = String(idx + 1).padStart(3, '0');
+    el.appendChild(g);
+  }
+  return el;
+}
+
+let liveEl = renderPageEl(0);
+stage.appendChild(liveEl);
+stage.appendChild(document.getElementById('zoneLeft'));
+stage.appendChild(document.getElementById('zoneRight'));
+
+function go(idx, animate=true){
+  idx = Math.max(0, Math.min(TOTAL - 1, idx));
+  if(idx === current && animate) return;
+  current = idx;
+  pageInput.value = current + 1;
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === TOTAL - 1;
+
+  const newEl = renderPageEl(current);
+  if(animate){
+    newEl.classList.add('entering');
+    stage.insertBefore(newEl, stage.firstChild);
+    liveEl.classList.add('leaving');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        newEl.classList.remove('entering');
+      });
+    });
+    const old = liveEl;
+    setTimeout(() => { old.remove(); }, 230);
+  } else {
+    stage.insertBefore(newEl, stage.firstChild);
+    liveEl.remove();
+  }
+  liveEl = newEl;
+}
+
+prevBtn.addEventListener('click', () => go(current - 1));
+nextBtn.addEventListener('click', () => go(current + 1));
+document.getElementById('zoneLeft').addEventListener('click', () => go(current - 1));
+document.getElementById('zoneRight').addEventListener('click', () => go(current + 1));
+
+pageInput.addEventListener('change', () => {
+  const v = parseInt(pageInput.value, 10);
+  if(!isNaN(v)) go(v - 1);
+});
+
+document.addEventListener('keydown', (e) => {
+  if(document.activeElement === pageInput) return;
+  if(e.key === 'ArrowRight' || e.key === ' ') { go(current + 1); }
+  if(e.key === 'ArrowLeft') { go(current - 1); }
+});
+
+let touchStartX = null;
+stage.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, {passive:true});
+stage.addEventListener('touchend', (e) => {
+  if(touchStartX === null) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if(Math.abs(dx) > 40){
+    if(dx < 0) go(current + 1); else go(current - 1);
+  }
+  touchStartX = null;
+}, {passive:true});
+
+prevBtn.disabled = true;
+</script>
+</body>
+</html>

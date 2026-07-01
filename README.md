@@ -2,6 +2,8 @@
 
 Blue Bag Press is pleased to present Lizabetta Frankline's _DIGITAL REAM._
 
+_Digital Ream_ is the commencing entry in the ongoing REAM multimedia biofeedback initative between Frankline and her partner, Thom Eichelberger-Young. 
+
 ## What's here
 - `index.html` — the entire viewer (HTML/CSS/JS + all page data embedded). No build step, no dependencies.
 
